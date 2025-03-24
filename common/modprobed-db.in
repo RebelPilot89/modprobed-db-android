@@ -27,7 +27,7 @@ if [[ ! -d "$HOMEDIR" ]]; then
   exit 1
 fi
 
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOMEDIR/.config}"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-/data/data/com.termux/files/home/.config}"
 
 [[ ! -d "$XDG_CONFIG_HOME" ]] && mkdir -p "$XDG_CONFIG_HOME"
 CFG_FILE="$XDG_CONFIG_HOME/modprobed-db.conf"
