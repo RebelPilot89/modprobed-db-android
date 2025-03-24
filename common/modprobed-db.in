@@ -8,8 +8,7 @@
 # option.
 #
 VERS='@VERSION@'
-SKEL="$PREFIX/share/modprobed-db/modprobed-db.skel"
-
+SKEL="/data/data/com.termux/files/usr/share/modprobed-db/modprobed-db.skel"
 if [[ ! -f $SKEL ]]; then
   echo "$SKEL is missing, please reinstall this package."
   exit 1
@@ -68,7 +67,12 @@ get_loaded_modules() {
   while read -r module; do
     # Verificar si el módulo está en uso (referencias activas)
     if [[ $(grep -c "$module" /sys/module/*/refcnt 2>/dev/null) -gt 0 ]]; then
-      echo "$module"
+      # Verificar si el módulo existe en las rutas correctas
+      if [[ -f "/vendor/lib/modules/$module.ko" || -f "/vendor_dlkm/lib/modules/$module.ko" ]]; then
+        echo "$module"
+      else
+        echo "DEBUG: Módulo $module no encontrado en /vendor/lib/modules ni en /vendor_dlkm/lib/modules" >&2
+      fi
     fi
   done
 }
@@ -118,23 +122,19 @@ check() {
 }
 
 rebuild() {
-  # first load what can be loaded from current database
-  # sed statement converts the db to a single, run-on sentence for modprobe
+  # Recargar módulos desde la base de datos
   echo -e "${BLD}Refreshing the contents of ${YLW}$DB${NRM}${BLD}"
-  modprobe -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB") &>/dev/null
-
-  # save database
-  cp -a "$DB" "$DB".$(date "+%Y%m%d_%H%M%S")
-  echo -e "${BLD}Old database saved to ${YLW}$DB.$(date "+%Y%m%d_%H%M%S")${NRM}${BLD}"
+  modprobe --dirname /vendor/lib/modules -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB") &>/dev/null
+  modprobe --dirname /vendor_dlkm/lib/modules -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB") &>/dev/null
 
   # Crear una nueva lista basada en los módulos cargados
   get_loaded_modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
   sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" > /tmp/.inmem
 
-  # clear database without deleting it to retain owner since called as sudo
+  # Limpiar la base de datos sin eliminarla
   sed -i d "$DB"
 
-  # populate the empty file with new list
+  # Poblar el archivo vacío con la nueva lista
   sort -k 1,1 "$DB" /tmp/.inmem | uniq >> "$DB"
   NEWDBSIZE=$(wc -l <"$DB")
   echo
@@ -142,10 +142,12 @@ rebuild() {
 }
 
 recall() {
-  # sed statement converts the db to a single, run-on sentence for modprobe
+  # Cargar módulos desde la base de datos
   echo -e "${BLD}Attempting to modprobe the contents of ${YLW}$DB${NRM}${BLD}"
-  modprobe -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB")
-  # print out currently loaded modules less those in the IGNORE array
+  modprobe --dirname /vendor/lib/modules -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB")
+  modprobe --dirname /vendor_dlkm/lib/modules -a $(sed ':a;N;$!ba;s/\n/ /g' "$DB")
+
+  # Mostrar módulos cargados actualmente
   awk '{print $1}' /proc/modules | sort -k 1,1 |
   grep -Ev "$(echo "${IGNORE[*]}" |
   sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" >/tmp/.inmem
