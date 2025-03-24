@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Verificar si el script se está ejecutando con bash
+if [ -z "$BASH_VERSION" ]; then
+  exec /data/data/com.termux/files/usr/bin/bash "$0" "$@"
+fi
+
 # modprobed-db by graysky
 #
 # The purpose of this little script is to keep track of EVERY single module
@@ -15,7 +20,7 @@ if [[ ! -f $SKEL ]]; then
 fi
 
 USER=$(whoami)
-HOMEDIR="$HOME"
+HOMEDIR="${HOME:-/data/data/com.termux/files/home}"
 
 if [[ ! -d "$HOMEDIR" ]]; then
   echo '==> ERROR: Cannot locate user home directory.'

@@ -1,7 +1,7 @@
 VERSION = 2.48
 PN = modprobed-db
 
-PREFIX ?= /data/data/com.termux/files/usr
+PREFIX = /data/data/com.termux/files/usr
 BINDIR = $(PREFIX)/bin
 DOCDIR = $(PREFIX)/share/doc/$(PN)-$(VERSION)
 MANDIR = $(PREFIX)/share/man/man8
@@ -23,15 +23,15 @@ all:
 
 install-bin:
 	$(Q)echo -e '\033[1;32mInstalling main script and skel config...\033[0m'
-	$(INSTALL_DIR) "$(DESTDIR)$(BINDIR)"
-	$(INSTALL_DIR) "$(DESTDIR)$(SKELDIR)"
-	$(INSTALL_PROGRAM) common/$(PN) "$(DESTDIR)$(BINDIR)/$(PN)"
-	$(INSTALL_DATA) common/$(PN).skel "$(DESTDIR)$(SKELDIR)/$(PN).skel"
+	$(INSTALL_DIR) "$(BINDIR)"
+	$(INSTALL_DIR) "$(SKELDIR)"
+	$(INSTALL_PROGRAM) common/$(PN) "$(BINDIR)/$(PN)"
+	$(INSTALL_DATA) common/$(PN).skel "$(SKELDIR)/$(PN).skel"
 
-	$(INSTALL_DIR) "$(DESTDIR)$(BASHDIR)"
-	$(INSTALL_DATA) common/bash-completion "$(DESTDIR)$(BASHDIR)/modprobed-db"
-	$(INSTALL_DIR) "$(DESTDIR)$(ZSHDIR)"
-	$(INSTALL_DATA) common/zsh-completion "$(DESTDIR)$(ZSHDIR)/_modprobed-db"
+	$(INSTALL_DIR) "$(BASHDIR)"
+	$(INSTALL_DATA) common/bash-completion "$(BASHDIR)/modprobed-db"
+	$(INSTALL_DIR) "$(ZSHDIR)"
+	$(INSTALL_DATA) common/zsh-completion "$(ZSHDIR)/_modprobed-db"
 
 install-man:
 	$(Q)echo -e '\033[1;32mInstalling manpage...\033[0m'
