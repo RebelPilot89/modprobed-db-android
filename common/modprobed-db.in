@@ -8,25 +8,15 @@
 # option.
 #
 VERS='@VERSION@'
-SKEL='/usr/share/modprobed-db/modprobed-db.skel'
+SKEL="$PREFIX/share/modprobed-db/modprobed-db.skel"
 
 if [[ ! -f $SKEL ]]; then
   echo "$SKEL is missing, please reinstall this package."
   exit 1
 fi
 
-if [[ -z "$SUDO_USER" ]]; then
-  if logname &>/dev/null; then
-    USER=$(logname)
-  fi
-elif [[ "$SUDO_USER" = "root" ]]; then
-  mesg="Cannot determine your username so exiting."
-  echo -e "==> ERROR: ${mesg}" && exit 1
-else
-  USER="$SUDO_USER"
-fi
-
-HOMEDIR=$(getent passwd "$USER" | cut -d: -f6)
+USER=$(whoami)
+HOMEDIR="$HOME"
 
 if [[ ! -d "$HOMEDIR" ]]; then
   echo '==> ERROR: Cannot locate user home directory.'
@@ -35,7 +25,7 @@ fi
 
 XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOMEDIR/.config}"
 
-[[ ! -d "$XDG_CONFIG_HOME" ]] && mkdir "$XDG_CONFIG_HOME"
+[[ ! -d "$XDG_CONFIG_HOME" ]] && mkdir -p "$XDG_CONFIG_HOME"
 CFG_FILE="$XDG_CONFIG_HOME/modprobed-db.conf"
 
 # name change from modprobed_db --> modprobed-db so move existing configs
@@ -48,16 +38,6 @@ if [[ ! -f "$CFG_FILE" ]]; then
   echo " $CFG_FILE"
   echo
   echo ' Consult the man page for setup instructions.'
-  if [[ -f /etc/modprobed_db.conf ]]; then
-    echo
-    echo ' Notice:'
-    echo ' /etc/modprobed_db.conf was found on your system.'
-    echo ' This file depreciated starting in version 2.19.'
-    echo ' Please diff this file against the freshly created one.'
-    echo
-    echo ' Do NOT just blindly overwrite!'
-    echo ' Note the differences in names (no underscore any more)!'
-  fi
   sed  "s|@HOME@|$HOMEDIR|" "$SKEL" >"$CFG_FILE"
   echo '------------------------------------------------------------'
   exit 0
