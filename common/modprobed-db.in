@@ -61,9 +61,14 @@ sudocheck() {
   fi
 }
 
+# Función para obtener los módulos cargados desde /proc/modules
+get_loaded_modules() {
+  cat /proc/modules | awk '{print $1}'
+}
+
 check() {
-  # print out currently loaded modules less those in the IGNORE array
-  awk '{print $1}' /proc/modules | sort -k 1,1 |
+  # Obtener la lista de módulos cargados desde /proc/modules
+  get_loaded_modules | sort -k 1,1 |
   grep -Ev "$(echo "${IGNORE[*]}" | sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" >/tmp/.inmem
 
   if [[ ! -f "$DB" ]]; then
@@ -115,8 +120,8 @@ rebuild() {
   cp -a "$DB" "$DB".$(date "+%Y%m%d_%H%M%S")
   echo -e "${BLD}Old database saved to ${YLW}$DB.$(date "+%Y%m%d_%H%M%S")${NRM}${BLD}"
 
-  # make new based on what successfully loaded
-  awk '{print $1}' /proc/modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
+  # Crear una nueva lista basada en los módulos cargados
+  get_loaded_modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
   sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" > /tmp/.inmem
 
   # clear database without deleting it to retain owner since called as sudo
@@ -167,7 +172,7 @@ store() {
   fi
 
   DBCHECK=$(md5sum "$DB" | cut -c1-32)
-  awk '{print $1}' /proc/modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
+  get_loaded_modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
   sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" > /tmp/.inmem
 
   sort -k 1,1 "$DB" /tmp/.inmem | uniq > /tmp/.potential_new_db
@@ -189,7 +194,7 @@ store() {
 storesilent() {
   [[ -w "$DB" ]] || exit 1
   DBCHECK=$(md5sum "$DB" | cut -c1-32)
-  awk '{print $1}' /proc/modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
+  get_loaded_modules | sort -k 1,1 | grep -Ev "$(echo "${IGNORE[*]}" |
   sed -e 's/^/^(/' -e 's/ /|/g' -e 's/$/)$/')" > /tmp/.inmem
 
   sort -k 1,1 "$DB" /tmp/.inmem | uniq > /tmp/.potential_new_db
