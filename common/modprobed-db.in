@@ -63,7 +63,14 @@ sudocheck() {
 
 # Función para obtener los módulos cargados desde /proc/modules
 get_loaded_modules() {
-  cat /proc/modules | awk '{print $1}'
+  # Obtener módulos cargados desde /proc/modules
+  cat /proc/modules | awk '{print $1}' |
+  while read -r module; do
+    # Verificar si el módulo está en uso (referencias activas)
+    if [[ $(grep -c "$module" /sys/module/*/refcnt 2>/dev/null) -gt 0 ]]; then
+      echo "$module"
+    fi
+  done
 }
 
 check() {
